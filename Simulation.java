@@ -1,105 +1,83 @@
 package semestralka;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
-
 public class Simulation {
     private Factory[] factories;
     private Supermarket[] supermarkets;
     private int[][] cost;
+    private int days;
 
     public static void main(String[] args) {
         String[] filenames = {"real_large.txt", "real_medium.txt", "real_small.txt", "real_small_sink.txt", "test_optim.txt", "test_optim_sink.txt", "test_price.txt", "test_small.txt"};
-        Simulation s = new Simulation();
-        s.loadFromFile(filenames[7]);
+        FileIO f = new FileIO();
+        f.loadFromFile(filenames[3]);
+        Simulation s = new Simulation(f);
+        System.out.println("Celkova cena: " + s.simulate());
     }
 
-     void loadFromFile(String fileName) {
-         File file = new File("./src/semestralka/files/"+fileName);
-         try {
-             Scanner sc = new Scanner(file);
-             String line;
-             line = skipLines(sc);
-             //System.out.println(line);
-             String[] data = line.split(" ");
-             factories = new Factory[Integer.parseInt(data[0])];
-             for(int i = 0; i < factories.length; i++) {
-                 factories[i] = new Factory();
-             }
-             supermarkets = new Supermarket[Integer.parseInt(data[1])];
-             for(int i = 0; i < supermarkets.length; i++) {
-                 supermarkets[i] = new Supermarket();
-             }
-             int goods = Integer.parseInt(data[2]);
-             int days = Integer.parseInt(data[3]);
-
-             line = skipLines(sc);
-             cost = loadArray(sc, line, factories.length, supermarkets.length);
-
-             line = skipLines(sc);
-             int[][] helpArray = loadArray(sc, line, goods, supermarkets.length);
-             int[] goodsS;
-             for(int i = 0; i < helpArray[0].length; i++) {
-                 goodsS = new int[goods];
-                 for(int o = 0; o < helpArray.length; o++) {
-                     goodsS[o] = helpArray[o][i];
-                 }
-                 supermarkets[i].setInitialGoods(goodsS);
-             }
-             line = skipLines(sc);
-             helpArray = loadArray(sc, line, goods*days, factories.length);
-             for(int i = 0; i < factories.length; i++) {
-                 int[][] productionPerDay = extractArray(helpArray, days, goods, i);
-                 factories[i].setProduction(productionPerDay);
-             }
-             line = skipLines(sc);
-             helpArray = loadArray(sc, line, goods*days, supermarkets.length);
-             for(int i = 0; i < supermarkets.length; i++) {
-                 int[][] demandPerDay = extractArray(helpArray, days, goods, i);
-                 supermarkets[i].setDemand(demandPerDay);
-             }
-             System.out.println(line);
-
-         } catch (FileNotFoundException e) {
-             e.printStackTrace();
-         }
+    public Simulation(FileIO f) {
+        supermarkets = f.getSupermarkets();
+        factories = f.getFactories();
+        cost = f.getCost();
+        days = f.getDays();
     }
 
-    int[][] extractArray(int[][] array, int a, int b, int i) {
-        int counter = 0;
-        int[][] productionPerDay = new int[a][b];
-        for(int o = 0; o < a; o++) {
-            for(int p = o; p < b*a; p+=a) {
-                productionPerDay[o][counter] = array[p][i];
-                counter++;
+    public int simulate() {
+        int suma = 0;
+        for(int i = 0; i < days; i++) {
+
+            int sumPerDay = simulateOneDay(i);
+            suma += sumPerDay;
+            System.out.println(i+1 + ". den cena - " + sumPerDay);
+            System.out.println("---------------------");
+            for(int j = 0; j < supermarkets.length;j++) {
+                supermarkets[j].resetStock();
             }
-            counter=0;
         }
-        return productionPerDay;
+        return suma;
     }
 
-    String skipLines(Scanner sc) {
-        String line;
-        while((line = sc.nextLine()).equals("") || (line.charAt(0) == '#')) {}
-        return line;
-    }
+    //ještě nějak přepíšu (nejspíš)
+    private int simulateOneDay(int i) {
+        int sum = 0;
+        for(int j = 0; j < supermarkets.length; j++) {
+            //System.out.println(j + ". supermarket:");
+            int[] supermarketDemandPerDay = supermarkets[j].getDemand()[i];
+            for(int k = 0; k < supermarketDemandPerDay.length; k++) {
+                int demandAfterOneStuff = supermarketDemandPerDay[k]-supermarkets[j].getGoodsOnStock()[k];
+                while(demandAfterOneStuff > 0) {
+                    int oneCost = Integer.MAX_VALUE;
+                    int factory = factories.length+1;
+                    int available = -1;
+                    for(int l = 0; l < factories.length; l++) {
+                        int [] productionInDay = factories[l].getProductionInOneDay(i);
+                        if(productionInDay[k] > 0) {
+                            if(cost[l][j] < oneCost) {
+                                oneCost = cost[l][j];
+                                factory = l;
+                                available = productionInDay[k];
+                            }
+                        }
+                    }
+                    if(factory == factories.length+1) {
+                        System.out.println(k+1+ ". zbozi doslo - doobjednat!!!");
+                        demandAfterOneStuff = 0;
+                    } else {
+                        int howMuch;
+                        if(demandAfterOneStuff >= available) {
+                            howMuch = available;
 
-    int[][] loadArray(Scanner sc, String line, int a, int b) {
-        int[][] array = new int[a][b];
-        for(int i = 0; i < array.length; i++) {
-            if(line.equals("") || line.charAt(0) == '#') {
-                i--;
-                line = sc.nextLine();
-                continue;
+                        } else {
+                            howMuch = demandAfterOneStuff;
+                        }
+                        factories[factory].changeProduction(i, k, howMuch);
+                        //System.out.println(Arrays.toString(factories[factory].getProductionInOneDay(i)));
+                        demandAfterOneStuff -= howMuch;
+                        sum += (howMuch*oneCost);
+                    }
+                }
             }
-            String[] lineSplit = line.split(" ");
-            for(int o = 0; o < lineSplit.length; o++) {
-                array[i][o] = Integer.parseInt(lineSplit[o]);
-            }
-            if(sc.hasNextLine())
-                line = sc.nextLine();
+            //System.out.println("----------------------------------");
         }
-        return array;
+        return sum;
     }
 }

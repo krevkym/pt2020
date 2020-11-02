@@ -1,15 +1,16 @@
 package semestralka;
 
 public class Supermarket {
-    private int[] initialGoods;
+    private int[] goodsOnStock;
     private int[][] demand;
 
-    public int[] getInitialGoods() {
-        return initialGoods;
+
+    public int[] getGoodsOnStock() {
+        return goodsOnStock;
     }
 
-    public void setInitialGoods(int[] initialGoods) {
-        this.initialGoods = initialGoods;
+    public void setGoodsOnStock(int[] goodsOnStock) {
+        this.goodsOnStock = goodsOnStock;
     }
 
     public int[][] getDemand() {
@@ -18,5 +19,11 @@ public class Supermarket {
 
     public void setDemand(int[][] demand) {
         this.demand = demand;
+    }
+
+    public void resetStock() {
+        for(int i = 0; i < goodsOnStock.length; i++) {
+            goodsOnStock[i] = 0;
+        }
     }
 }
