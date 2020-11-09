@@ -10,22 +10,25 @@ public class FileIO {
     private Supermarket[] supermarkets;
     private int[][] cost;
     private int days;
+    private int goods;
 
+    int getGoods() {
+        return goods;
+    }
 
-    public int[][] getCost() {
+    int[][] getCost() {
         return cost;
     }
-    public Factory[] getFactories() {
+    Factory[] getFactories() {
         return factories;
     }
-    public Supermarket[] getSupermarkets() {
+    Supermarket[] getSupermarkets() {
         return supermarkets;
     }
-    public int getDays() {
+    int getDays() {
         return days;
     }
 
-    //nevím jak to napsat jinak
     void loadFromFile(String fileName) {
         File file = new File("./src/semestralka/files/"+fileName);
         try {
@@ -41,7 +44,7 @@ public class FileIO {
             for(int i = 0; i < supermarkets.length; i++) {
                 supermarkets[i] = new Supermarket();
             }
-            int goods = Integer.parseInt(data[2]);
+            goods = Integer.parseInt(data[2]);
             days = Integer.parseInt(data[3]);
             int[] blockHeights = new int[]{factories.length, goods, goods *days, goods *days};
             int[] blockWidths = new int[]{supermarkets.length, supermarkets.length, factories.length, supermarkets.length};
@@ -66,6 +69,7 @@ public class FileIO {
                 int[][] productionPerDay = extractArray(blocks[2], days, goods, i);
                 factories[i].setProduction(productionPerDay);
             }
+            sc.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -81,7 +85,7 @@ public class FileIO {
         return line;
     }
 
-    int[][] extractArray(int[][] array, int a, int b, int i) {
+    private int[][] extractArray(int[][] array, int a, int b, int i) {
         int counter = 0;
         int[][] productionPerDay = new int[a][b];
         for(int o = 0; o < a; o++) {
@@ -94,7 +98,7 @@ public class FileIO {
         return productionPerDay;
     }
 
-    int[][] loadArray(Scanner sc, String line, int a, int b) {
+    private int[][] loadArray(Scanner sc, String line, int a, int b) {
         int[][] array = new int[a][b];
         for(int i = 0; i < array.length; i++) {
             if(line.equals("") || line.charAt(0) == '#') {
@@ -104,7 +108,7 @@ public class FileIO {
             }
             //v real_small_sink.txt jsou cisla v poslednim sloupci v poptavce oddeleny dvemi mezerami.. takze celkem neprijemny split
             String[] lineSplit = line.split(" {2}| ");
-            for(int o = 0; o < b; o++) {
+            for(int o = 0; o < lineSplit.length; o++) {
                 array[i][o] = Integer.parseInt(lineSplit[o]);
             }
             if(sc.hasNextLine()) {

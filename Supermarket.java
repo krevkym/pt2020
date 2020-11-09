@@ -5,6 +5,16 @@ public class Supermarket {
     private int[][] demand;
 
 
+    public int[] getTotalDemand(int day) {
+        int[] totalDemand = new int[demand[0].length];
+        for(int i = day+1; i < demand.length; i++) {
+            for(int j = 0; j < demand[0].length; j++) {
+                totalDemand[j] += demand[i][j];
+            }
+        }
+        return totalDemand;
+    }
+
     public int[] getGoodsOnStock() {
         return goodsOnStock;
     }
@@ -13,17 +23,22 @@ public class Supermarket {
         this.goodsOnStock = goodsOnStock;
     }
 
-    public int[][] getDemand() {
-        return demand;
+    public int[] getDemandInDay(int day) {
+        return demand[day];
     }
+
 
     public void setDemand(int[][] demand) {
         this.demand = demand;
     }
 
-    public void resetStock() {
+    public void addGoods(int howMuch, int goods) {
+        goodsOnStock[goods] += howMuch;
+    }
+
+    public void updateStock(int day) {
         for(int i = 0; i < goodsOnStock.length; i++) {
-            goodsOnStock[i] = 0;
+            goodsOnStock[i] -= demand[day][i];
         }
     }
 }
