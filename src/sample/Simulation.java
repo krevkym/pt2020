@@ -188,12 +188,6 @@ public class Simulation{
         }
         return factory;
     }
-/*
-public int nacist (int a , int b, int c){
-        this.den = a;
-        this.perDay = c;
 
-}
-*/
 
 }

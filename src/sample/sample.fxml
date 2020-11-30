@@ -32,7 +32,7 @@
                   <Label alignment="CENTER" layoutX="443.0" layoutY="110.0" prefHeight="25.0" prefWidth="87.0" text="Celková cena" textAlignment="CENTER" />
                   <Label alignment="CENTER" layoutX="80.0" layoutY="111.0" prefHeight="17.0" prefWidth="41.0" text="Den" />
                   <Label alignment="CENTER" layoutX="254.0" layoutY="111.0" prefHeight="17.0" prefWidth="68.0" text="Cena/den" />
-               </children>
+
             </Pane>
             <Pane prefHeight="200.0" prefWidth="200.0">
 
