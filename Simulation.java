@@ -1,42 +1,67 @@
 package semestralka;
 
-public class Simulation {
+public class Simulation{
     private Factory[] factories;
     private Supermarket[] supermarkets;
     private int[][] cost;
     private int days;
     private int goods;
+    private Controller c;
+    private boolean isPaused;
+    public boolean stop;
 
-    public static void main(String[] args) {
-        String[] filenames = {"real_large.txt", "real_medium.txt", "real_small.txt", "real_small_sink.txt", "test_optim.txt", "test_optim_sink.txt", "test_price.txt", "test_small.txt"};
-        FileIO f = new FileIO();
-        f.loadFromFile(filenames[2]);
-        Simulation s = new Simulation(f);
-        System.out.println("Celkova cena: " + s.simulate());
-    }
-
-    public Simulation(FileIO f) {
+    public Simulation(FileIO f, Controller c) {
         supermarkets = f.getSupermarkets();
         factories = f.getFactories();
         cost = f.getCost();
         days = f.getDays();
         goods = f.getGoods();
+        this.c = c;
+        isPaused = false;
     }
 
-    private int simulate() {
-        int suma = 0;
+
+    public int simulate() {
+        int sum = 0;
         for(int i = 0; i < days; i++) {
             int sumPerDay = simulateOneDay(i);
-            suma += sumPerDay;
-            for(int j = 0; j < supermarkets.length; j++) {
-                supermarkets[j].updateStock(i);
+            if(sumPerDay == -1) {
+                c.getOutcome().appendText("Došlo zboží - ukončuji simulaci.\n");
+                break;
             }
-            System.out.println(i+1 + ". den cena - " + sumPerDay);
-            System.out.println("---------------------");
+            sum += sumPerDay;
+            c.getWhatDay().setText((i+1)+"");
+            c.getDaily().setText(sumPerDay+"");
+            c.getSumm().setText(sum+"");
+            c.getOutcome().appendText(String.format("Den %d., cena - %,d\n", (i+1), sumPerDay));
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
+            for(Supermarket supermarket : supermarkets) {
+                supermarket.updateStock(i);
+            }
+
+            System.out.println(i + 1 + ". den cena - " + sumPerDay);
+            System.out.println("---------------------");
+            while(isPaused) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(stop) {
+                stop = false;
+                break;
+            }
         }
-        return suma;
+        c.getOutcome().appendText("Celkova cena za simulaci - " + sum);
+        return sum;
     }
+
 
     private int simulateOneDay(int i) {
         int sum = 0;
@@ -46,16 +71,11 @@ public class Simulation {
                 while(demandInDay > 0) {
                     int factory = getLowestCostFactory(l, i, j);
                     if(factory == -1) {
-                        System.out.println("Zbozi " + j + " doslo");
-                        break;
+                        c.getOutcome().appendText("Zboží " + j + " došlo\n");
+                        return -1;
                     }
                     int production = factories[factory].getProductionInOneDay(i)[j];
-                    int number;
-                    if(demandInDay >= production) {
-                        number = production;
-                    } else {
-                        number = demandInDay;
-                    }
+                    int number = Math.min(demandInDay, production);
                     sum += number*cost[factory][l];
                     demandInDay -= number;
                     supermarkets[l].addGoods(number ,j);
@@ -70,17 +90,14 @@ public class Simulation {
                     if(supermarket == -1) {
                         break;
                     }
-                    if(supermarkets[supermarket].getTotalDemand(i)[j] >= production) {
-                            number = production;
-                    } else {
-                            number = supermarkets[supermarket].getTotalDemand(i)[j];
-                    }
+                    number = Math.min(supermarkets[supermarket].getTotalDemand(i)[j], production);
                     sum += number*cost[l][supermarket];
                     supermarkets[supermarket].addGoods(number, j);
                 }
             }
         }
         return sum;
+
     }
 
     private int getMarket(int factory, int goods, int day, int production) {
@@ -111,5 +128,10 @@ public class Simulation {
         }
         return factory;
     }
+
+    public void setPaused(boolean state) {
+        isPaused = state;
+    }
+
 
 }

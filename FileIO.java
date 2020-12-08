@@ -11,11 +11,9 @@ public class FileIO {
     private int[][] cost;
     private int days;
     private int goods;
-
     int getGoods() {
         return goods;
     }
-
     int[][] getCost() {
         return cost;
     }
@@ -29,8 +27,8 @@ public class FileIO {
         return days;
     }
 
-    void loadFromFile(String fileName) {
-        File file = new File("./src/semestralka/files/"+fileName);
+    void loadFromFile(File file) {
+        //File file = new File("./src/semestralka/files/"+fileName);
         try {
             Scanner sc = new Scanner(file);
             String line = skipLines(sc);
@@ -46,7 +44,7 @@ public class FileIO {
             }
             goods = Integer.parseInt(data[2]);
             days = Integer.parseInt(data[3]);
-            int[] blockHeights = new int[]{factories.length, goods, goods *days, goods *days};
+            int[] blockHeights = new int[]{factories.length, goods, goods*days, goods *days};
             int[] blockWidths = new int[]{supermarkets.length, supermarkets.length, factories.length, supermarkets.length};
             int blockCounter;
             int[][][] blocks = new int[4][][];
